@@ -1,0 +1,411 @@
+% !TeX program = pdflatex
+\documentclass[11pt,a4paper]{report}
+
+\usepackage[margin=23mm]{geometry}
+\usepackage[T5,T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[english,vietnamese]{babel}
+\usepackage{lmodern,microtype}
+\usepackage{graphicx,booktabs,array,tabularx}
+\usepackage{amsmath,amssymb,float,xcolor,enumitem,fancyhdr,hyperref,placeins}
+
+\graphicspath{{assets/}}
+\hypersetup{colorlinks=true,linkcolor=blue!55!black,citecolor=blue!55!black,urlcolor=blue!55!black}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{5pt}
+\setcounter{secnumdepth}{3}
+\setcounter{tocdepth}{2}
+
+\definecolor{navy}{RGB}{25,56,92}
+\definecolor{lightblue}{RGB}{229,239,249}
+\definecolor{passgreen}{RGB}{0,105,70}
+\definecolor{failred}{RGB}{170,35,35}
+\definecolor{warnorange}{RGB}{185,105,0}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\scriptsize\itshape Trường Đại học Khoa học Tự nhiên - Khoa Điện tử - Viễn thông}
+\fancyhead[R]{\scriptsize\itshape Lê Phan Thanh Liêm}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\fancypagestyle{plain}{\fancyhf{}\fancyhead[L]{\scriptsize\itshape Trường Đại học Khoa học Tự nhiên - Khoa Điện tử - Viễn thông}\fancyhead[R]{\scriptsize\itshape Lê Phan Thanh Liêm}\fancyfoot[C]{\thepage}\renewcommand{\headrulewidth}{0.4pt}}
+
+\newcommand{\V}{\mathrm{V}}
+\newcommand{\Hz}{\mathrm{Hz}}
+\newcommand{\micro}{\mu}
+\newcommand{\ohm}{\Omega}
+\newcommand{\dd}{\mathrm{d}}
+\newcommand{\SI}[2]{\ensuremath{#1\,\mathrm{#2}}}
+\newcommand{\si}[1]{\ensuremath{\mathrm{#1}}}
+\newcommand{\SIrange}[3]{\ensuremath{#1\text{--}#2\,\mathrm{#3}}}
+\newcommand{\ang}[1]{\ensuremath{#1^{\circ}}}
+\newcommand{\pass}{\textcolor{passgreen}{Đạt}}
+\newcommand{\fail}{\textcolor{failred}{Chưa đạt}}
+\newcommand{\pending}{\textcolor{warnorange}{Cần bổ sung}}
+
+\newcommand{\placeholderfigure}[3][0.82\textwidth]{%
+  \begin{figure}[H]\centering
+  \IfFileExists{assets/#2}{\includegraphics[width=#1]{#2}}{%
+    \fcolorbox{navy}{lightblue}{\begin{minipage}[c][58mm][c]{0.78\textwidth}\centering
+      \Large\color{navy}\textbf{VỊ TRÍ CHÈN HÌNH}\\[3mm]
+      \normalsize Tệp đề nghị: \texttt{\detokenize{assets/#2}}
+    \end{minipage}}}
+  \caption{#3}
+  \end{figure}}
+
+\begin{document}
+
+\begin{titlepage}
+  \centering
+  \vspace*{7mm}
+  {\large\bfseries TRƯỜNG ĐẠI HỌC KHOA HỌC TỰ NHIÊN - ĐHQG TP.HCM\par}
+  \vspace{1.5mm}
+  {\large\bfseries KHOA ĐIỆN TỬ - VIỄN THÔNG\par}
+  \vspace{12mm}
+  \IfFileExists{assets/khtn_reference.png}{\includegraphics[width=31mm,trim=270 14 270 112,clip]{khtn_reference.png}}{\rule{31mm}{31mm}}\par
+  \vspace{12mm}
+  {\Large\bfseries THIẾT KẾ VI MẠCH TƯƠNG TỰ\par}
+  \vspace{8mm}
+  {\color{navy}\rule{\textwidth}{1.2pt}\par}
+  \vspace{8mm}
+  {\Huge\bfseries THIẾT KẾ VÀ PHÂN TÍCH OTA HAI TẦNG CHO BANDGAP REFERENCE\par}
+  \vspace{5mm}
+  {\Large Cặp vi sai PMOS, bù Miller, công nghệ GPDK090\par}
+  \vspace{3mm}
+  {\Large Nguồn nuôi \SI{0.9}{V}\par}
+  \vspace{8mm}
+  {\color{navy}\rule{\textwidth}{1.2pt}\par}
+  \vfill
+  \begin{tabular}{rl}
+    \textbf{Sinh viên:} & Lê Phan Thanh Liêm\\
+    \textbf{Môi trường thiết kế:} & Cadence Virtuoso / Spectre\\
+    \textbf{Công nghệ:} & GPDK090 BSIM3\\
+    \textbf{Thời gian:} & Tháng 11 năm 2026
+  \end{tabular}
+  \vfill
+  
+\end{titlepage}
+
+\pagenumbering{roman}
+\chapter*{Tóm tắt}
+\addcontentsline{toc}{chapter}{Tóm tắt}
+Báo cáo trình bày OTA CMOS hai tầng công suất thấp sử dụng cặp vi sai đầu vào PMOS và bù Miller trong công nghệ GPDK090. Vì OTA được định hướng làm bộ khuếch đại sai số trong bandgap reference, phạm vi khảo sát được rút gọn còn điểm làm việc DC, ICMR, output swing, đáp ứng AC và công suất tĩnh. Các chỉ tiêu của hệ thống như PSRR, line regulation, startup và PVT sẽ được đánh giá sau khi ghép OTA vào mạch bandgap hoàn chỉnh.
+
+\tableofcontents
+\clearpage
+\pagenumbering{arabic}
+
+\chapter{Giới thiệu và yêu cầu thiết kế}
+
+\section{Mục tiêu}
+Mục tiêu là thiết kế và kiểm chứng một OTA hai tầng công suất thấp dùng trong vòng hồi tiếp của bandgap reference. Báo cáo chỉ tập trung vào operating point, ICMR, output swing, độ lợi--độ ổn định AC và công suất tĩnh. Phương pháp phân tích dựa trên các tài liệu kinh điển về thiết kế CMOS tương tự \cite{razavi,baker,allen}.
+
+\section{Kiến trúc mạch}
+Chức năng của các transistor:
+\begin{itemize}[leftmargin=18mm]
+  \item M1--M2: cặp vi sai PMOS, phù hợp với miền common-mode thấp;
+  \item M3--M4: gương dòng NMOS và chuyển đổi vi sai sang đơn đầu;
+  \item M5: nguồn dòng đuôi PMOS cho cặp vi sai;
+  \item M6: tầng khuếch đại common-source NMOS;
+  \item M7: tải nguồn dòng PMOS của tầng thứ hai;
+  \item M8: PMOS mắc diode để tạo điện áp phân cực cho M5 và M7;
+  \item $R_z$--$C_C$: mạng bù Miller nối từ ngõ ra tầng một đến ngõ ra OTA.
+\end{itemize}
+
+\placeholderfigure{schematic_final.png}{Sơ đồ nguyên lý OTA hai tầng dùng cặp vi sai PMOS, kèm kích thước transistor và các nút tín hiệu.}
+
+\section{Khảo sát đặc tính transistor}
+Trước khi chốt kích thước, NMOS và PMOS được mắc diode và quét điện áp cổng--nguồn ở dòng phân cực phù hợp với thiết kế. Mục đích của phép khảo sát là kiểm tra dấu và độ lớn của điện áp ngưỡng, xác định miền inversion, đồng thời ước lượng $K_n'$, $K_p'$ và $g_m/I_D$ cho bước tính first-cut. Các tham số rút ra từ mô hình bình phương chỉ dùng để chọn kích thước ban đầu; quyết định cuối cùng phải dựa trên operating point của mô hình BSIM3.
+
+\placeholderfigure[0.72\textwidth]{nmos_characteristic.png}{Testbench và đường đặc tính NMOS dùng để trích tham số công nghệ ban đầu.}
+\placeholderfigure[0.72\textwidth]{pmos_characteristic.png}{Testbench và đường đặc tính PMOS dùng để trích tham số công nghệ ban đầu.}
+
+\begin{table}[H]\centering
+\caption{Các tham số công nghệ cần điền sau khi khảo sát transistor.}
+\begin{tabular}{lcc}
+\toprule
+Tham số & Giá trị dùng trong tính tay & Giá trị trích từ mô phỏng\\
+\midrule
+$K_n'$ & \SI{296.4}{\micro A/V^2} & \textit{chưa điền}\\
+$K_p'$ & \SI{167.4}{\micro A/V^2} & \textit{chưa điền}\\
+$V_{TN}$ & \SI{0.1866}{V} & \textit{chưa điền}\\
+$|V_{TP}|$ & \SI{0.1491}{V} & \textit{chưa điền}\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Thông số yêu cầu}
+\begin{table}[H]\centering
+\caption{Thông số thiết kế và điều kiện mô phỏng.}
+\begin{tabularx}{\textwidth}{>{\bfseries}l >{\raggedright\arraybackslash}X l}
+\toprule
+Thông số & Giá trị & Ký hiệu\\
+\midrule
+Nguồn nuôi & $V_{DD}=\SI{1.2}{V}$, $V_{SS}=\SI{0}{V}$ & $V_{DD},V_{SS}$\\
+Độ lợi vòng hở DC & ít nhất \SI{60}{dB} & $A_0$\\
+Unity-gain frequency & ít nhất \SI{300}{kHz} & $f_u$\\
+Phase margin & ít nhất \ang{60} với tải bandgap thực & PM\\
+Tụ tải & \SI{500}{fF} & $C_L$\\
+Điện áp common-mode danh định & \SI{258}{mV} & $V_{CM}$\\
+Input common-mode range & \SIrange{0.15}{0.35}{V} & ICMR\\
+Dòng phân cực tham chiếu & \SI{150}{nA} & $I_{BIAS}$\\
+Tham số công nghệ first-cut & $K_n'=\SI{296.4}{\micro A/V^2}$, $K_p'=\SI{167.4}{\micro A/V^2}$ & $K_n',K_p'$\\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+Các điện áp ngưỡng dùng trong tính tay là $|V_{TP}|\approx\SI{0.1491}{V}$ và $V_{TN}\approx\SI{0.1866}{V}$. Đây chỉ là tham số đơn giản hóa; mô phỏng Spectre sử dụng đầy đủ mô hình BSIM3.
+
+\chapter{Thiết kế giải tích ban đầu}
+
+\section{Các quan hệ thiết kế}
+\placeholderfigure[0.76\textwidth]{small_signal_model.png}{Mô hình tín hiệu nhỏ của OTA hai tầng có mạng bù Miller $R_z$--$C_C$.}
+
+Hình trên được sử dụng như mô hình tín hiệu nhỏ \emph{tổng quát} của op-amp CMOS hai tầng. So với cấu hình dùng cặp đầu vào NMOS, việc dùng M1--M2 PMOS làm thay đổi chiều của nguồn dòng điều khiển và có thể làm thay đổi dấu trung gian của từng tầng. Tuy nhiên, khi phân tích theo độ lớn, cấu trúc hai nút trở kháng cao, hiệu ứng Miller, các cực và zero vẫn có cùng dạng. Vì vậy các quan hệ $A_0$, GBW và zero của mạng $R_z$--$C_C$ bên dưới vẫn áp dụng được. Các giá trị $g_m$, $g_{ds}$ và $r_o$ không được lấy lại từ mạch NMOS mà phải trích từ operating point của chính mạch PMOS hiện tại.
+
+Đặt $S_i=(W/L)_i$. Các quan hệ chính là
+\begin{align}
+GBW&\approx\frac{g_{m1}}{2\pi C_C},\\
+A_{v1}&\approx\frac{g_{m2}}{g_{ds2}+g_{ds4}},\\
+A_{v2}&\approx\frac{g_{m6}}{g_{ds6}+g_{ds7}},\\
+A_0&\approx A_{v1}A_{v2},\\
+p_2&\approx-\frac{g_{m6}}{C_L}.
+\end{align}
+
+Khi dùng tụ Miller nối tiếp điện trở $R_z$, zero bù được xấp xỉ bởi
+\begin{equation}
+z\approx\frac{1}{C_C\left(R_z-1/g_{m6}\right)}.
+\end{equation}
+Với $R_z\approx1/g_{m6}$, zero phía phải có thể được đẩy ra tần số rất cao. Nếu $R_z>1/g_{m6}$, zero chuyển sang nửa mặt phẳng trái và tạo thêm phase lead.
+
+\section{Dòng đuôi và tụ bù}
+M5 và M8 dùng chung điện áp $V_{SG}$. Với tỷ số kích thước danh định
+\begin{equation}
+\frac{S_5}{S_8}=\frac{3.8/10}{1.9/10}=2,
+\end{equation}
+dòng đuôi là
+\begin{equation}
+I_5=2I_{BIAS}=2(\SI{150}{nA})=\boxed{\SI{300}{nA}}.
+\end{equation}
+
+Giá trị khởi đầu $C_C=\SI{1}{pF}$ được chọn để tạo cực trội rõ ràng ở dòng phân cực thấp. Khi OTA được ghép vào bandgap, $C_C$ phải được quét quanh \SIrange{0.68}{1.1}{pF} và chốt theo phase margin với đúng tải, mạng hồi tiếp và điện dung ký sinh của bandgap. Slew rate riêng của OTA không được dùng làm tiêu chí chốt trong ứng dụng này.
+
+\section{Cặp vi sai PMOS}
+Với $C_C=\SI{1}{pF}$, transconductance cần thiết là
+\begin{equation}
+g_{m1}=2\pi(\SI{500}{kHz})(\SI{1}{pF})=\boxed{\SI{3.142}{\micro S}}.
+\end{equation}
+Ở trạng thái cân bằng, $I_{D1}=I_{D2}=I_5/2=\SI{150}{nA}$. Do đó
+\begin{equation}
+S_1=S_2=\frac{g_{m1}^2}{K_p'I_5}=0.1966.
+\end{equation}
+Thiết kế ban đầu với $L=\SI{4}{\micro m}$ cho $W\approx\SI{0.8}{\micro m}$. Để tăng điện trở ra và độ lợi nội tại, cả $W$ và $L$ được nhân đồng thời với 2.5, cho
+\begin{equation}
+\boxed{W_1=W_2=\SI{2}{\micro m},\quad L_1=L_2=\SI{10}{\micro m}}.
+\end{equation}
+
+\section{Gương dòng NMOS và mạch phân cực PMOS}
+Các tỷ số $W/L$ được giữ không đổi khi tăng chiều dài kênh:
+\begin{align}
+M3,M4:&\quad W/L=0.5/10=0.05,\\
+M5:&\quad W/L=3.8/10=0.38,\\
+M8:&\quad W/L=1.9/10=0.19.
+\end{align}
+Tỷ số M5/M8 bằng 2 giữ dòng đuôi gần \SI{300}{nA}. Việc dùng $L=\SI{10}{\micro m}$ làm giảm channel-length modulation và tăng độ lợi, đổi lại diện tích và điện dung ký sinh lớn hơn.
+
+\section{Tầng khuếch đại thứ hai và điện trở nulling}
+Tầng hai được hiệu chỉnh bằng M6 NMOS và M7 PMOS. Bộ kích thước gần nhất dùng trong quá trình mô phỏng là
+\begin{equation}
+M6:\ W/L=1.2/10,\qquad M7:\ W/L\approx4.0/10.
+\end{equation}
+Giá trị M7 phải được tinh chỉnh nhẹ để đặt $V_{OUT,Q}$ xa cả hai rail và bảo đảm M6, M7 cùng bão hòa.
+
+Từ một operating point trung gian, $g_{m6}\approx\SI{4.13}{\micro S}$, do đó
+\begin{equation}
+R_z\approx\frac{1}{g_{m6}}\approx\SI{242}{k\ohm}.
+\end{equation}
+Giá trị chọn ban đầu là
+\begin{equation}
+\boxed{R_z=\SI{240}{k\ohm}}.
+\end{equation}
+Khi cần tăng phase margin mà hạn chế thay đổi transistor, có thể quét $C_C$ hoặc tăng $R_z$ để tạo zero LHP; mọi lựa chọn cuối phải dựa trên phase tại đúng tần số cắt 0 dB.
+
+\section{Bảng kích thước}
+\begin{table}[H]\centering
+\caption{Kích thước transistor của phiên bản kênh dài.}
+\begin{tabular}{ccccc}
+\toprule
+Linh kiện & Chức năng & $W$ (\si{\micro m}) & $L$ (\si{\micro m}) & $W/L$\\
+\midrule
+M1, M2 & Cặp vi sai PMOS & 2.0 & 10 & 0.20\\
+M3, M4 & Gương dòng NMOS & 0.5 & 10 & 0.05\\
+M5 & Nguồn dòng PMOS & 3.8 & 10 & 0.38\\
+M6 & Tầng hai NMOS & 1.2 & 10 & 0.12\\
+M7 & Tải PMOS tầng hai & 4.0 (hiệu chỉnh) & 10 & 0.40\\
+M8 & PMOS phân cực & 1.9 & 10 & 0.19\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Từ operating point danh định, các nhánh nối trực tiếp với $V_{DD}$ có dòng xấp xỉ $|I_{D5}|=\SI{297.358}{nA}$, $|I_{D7}|=\SI{360.834}{nA}$ và $|I_{D8}|=\SI{147.899}{nA}$. Tổng dòng ước lượng từ các nhánh phù hợp với phép đo trực tiếp tại nguồn $V_3$:
+\begin{equation}
+I(V_3)=-\SI{808.148}{nA},\qquad
+P(V_3)=-\SI{969.777}{nW}.
+\end{equation}
+Dấu âm cho biết nguồn đang cấp năng lượng cho mạch. Do đó công suất tĩnh OTA tiêu thụ là
+\begin{equation}
+P_{DC}=|P(V_3)|\approx\boxed{\SI{0.970}{\micro W}}.
+\end{equation}
+\placeholderfigure{power_measurement.png}{Kết quả đo trực tiếp dòng và công suất tại nguồn $V_{DD}=\SI{1.2}{V}$.}
+
+\chapter{Phân tích DC}
+
+\section{Điểm làm việc danh định}
+Điểm làm việc được khảo sát tại $V_{IN+}=V_{IN-}=V_{CM}=\SI{258}{mV}$. Mục tiêu là M1--M8 đều ở region 2, dòng hai nhánh cặp vi sai gần bằng nhau, $I_{D5}\approx\SI{300}{nA}$ và $V_{OUT,Q}$ nằm đủ xa hai rail.
+
+\placeholderfigure{dc_operating_final.png}{Điểm làm việc DC sau lần hiệu chỉnh, hiển thị điện áp tại các nút chính của OTA.}
+
+Từ annotation trên schematic, các điện áp nút được đọc trực tiếp như Bảng~\ref{tab:dc-node-voltage}. Hai đầu vào được đặt bằng nhau tại khoảng \SI{258.147}{mV}; ngõ ra cũng ổn định tại \SI{258.147}{mV}, phù hợp với trạng thái cân bằng DC dùng để khảo sát operating point.
+
+\begin{table}[H]\centering
+\caption{Điện áp các nút chính đọc từ kết quả DC.}
+\label{tab:dc-node-voltage}
+\begin{tabular}{lll}
+\toprule
+Nút & Giá trị & Ý nghĩa\\
+\midrule
+$V_{DD}$ & \SI{1.200}{V} & Rail nguồn phía PMOS trong ảnh mô phỏng\\
+$V_{BIAS}$ & \SI{969.381}{mV} & Cổng M8, M5 và M7\\
+$V_{IN-}$ & \SI{258.147}{mV} & Điện áp vào nhánh M1\\
+$V_{IN+}$ & \SI{258.147}{mV} & Điện áp vào nhánh M2\\
+$V_X$ & \SI{299.531}{mV} & Nút M1--M3 và cổng gương M3--M4\\
+$V_1$ & \SI{306.943}{mV} & Ngõ ra tầng một, nối đến cổng M6\\
+$V_{OUT,Q}$ & \SI{258.147}{mV} & Điểm làm việc ngõ ra\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]\centering
+\caption{Operating point của M1--M8 trích từ Spectre. Dòng PMOS được trình bày theo trị tuyệt đối.}
+\begin{tabular}{cccccc}
+\toprule
+MOS & $I_D$ & $g_m$ & $g_{ds}$ & $|V_{DSAT}|$ & Region\\
+\midrule
+M1 & \SI{147.323}{nA} & \SI{2.36951}{\micro S} & \SI{6.90031}{nS} & \SI{110.050}{mV} & 2\\
+M2 & \SI{147.615}{nA} & \SI{2.37178}{\micro S} & \SI{7.74795}{nS} & \SI{110.153}{mV} & 2\\
+M3 & \SI{146.590}{nA} & \SI{1.81877}{\micro S} & \SI{4.57576}{nS} & \SI{143.253}{mV} & 2\\
+M4 & \SI{146.623}{nA} & \SI{1.81944}{\micro S} & \SI{4.20854}{nS} & \SI{143.253}{mV} & 2\\
+M5 & \SI{297.358}{nA} & \SI{4.58924}{\micro S} & \SI{2.08049}{nS} & \SI{104.028}{mV} & 2\\
+M6 & \SI{362.079}{nA} & \SI{4.44886}{\micro S} & \SI{20.8911}{nS} & \SI{144.313}{mV} & 2\\
+M7 & \SI{360.834}{nA} & \SI{5.30591}{\micro S} & \SI{2.23757}{nS} & \SI{103.995}{mV} & 2\\
+M8 & \SI{147.899}{nA} & \SI{2.27416}{\micro S} & \SI{10.3915}{nS} & \SI{104.216}{mV} & 2\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Tất cả transistor đều có \texttt{region = 2} trong kết quả Spectre, tương ứng miền bão hòa của mô hình đang sử dụng. Dòng hai transistor đầu vào gần bằng nhau: sai lệch giữa $|I_{D1}|$ và $|I_{D2}|$ chỉ khoảng \SI{0.292}{nA}. Tương tự, M3--M4 có dòng gần bằng nhau và M6--M7 cân bằng ở khoảng \SI{361}{nA}. Điều này cho thấy điểm phân cực DC của hai tầng đã được thiết lập hợp lý tại điều kiện mô phỏng hiện tại.
+
+\section{Dải common-mode đầu vào}
+OTA được mắc voltage follower và quét $V_{CM}$ từ \SI{50}{mV} đến \SI{1.1}{V}. Sai số bám được định nghĩa
+\begin{equation}
+e_{CM}=V_{OUT}-V_{CM}.
+\end{equation}
+Tiêu chuẩn sử dụng là $|e_{CM}|\le\SI{1}{mV}$. Các marker đã đo cho kết quả
+\begin{align}
+|e_{CM}(\SI{0.130}{V})|&=\SI{968.135}{\micro V},\\
+|e_{CM}(\SI{1.030}{V})|&=\SI{986.498}{\micro V}.
+\end{align}
+Cả hai marker đều vừa nằm trong giới hạn \SI{1}{mV}. Vì vậy dải common-mode đo được tại điều kiện nominal được chốt là
+\begin{equation}
+\boxed{\SI{0.130}{V}\le V_{CM}\le\SI{1.030}{V}}.
+\end{equation}
+Điểm làm việc bandgap $V_{CM,Q}\approx\SI{258}{mV}$ nằm trong dải này và cách biên dưới khoảng \SI{128}{mV}. ICMR cần được kiểm tra lại tại các corner PVT vì hai biên trên được xác định theo tiêu chuẩn sai số bám \SI{1}{mV}.
+
+\placeholderfigure{icmr_lower_130mv.png}{Biên dưới ICMR tại $V_{CM}=\SI{130}{mV}$ với sai số bám \SI{968.135}{\micro V}.}
+\placeholderfigure{icmr_upper_1p03v.png}{Biên trên ICMR tại $V_{CM}=\SI{1.03}{V}$ với sai số bám \SI{986.498}{\micro V}.}
+
+\section{Output swing của OTA độc lập}
+Để khảo sát giới hạn ngõ ra trước khi ghép bandgap, giữ $V_{IN+}=\SI{258}{mV}$ và đặt $V_{IN-}=V_{SWEEP}$. OTA làm việc vòng hở với $C_L=\SI{500}{fF}$; quét $V_{SWEEP}$ từ \SI{200}{mV} đến \SI{320}{mV} với bước \SI{0.1}{mV}. Hai plateau của đường $V_{OUT}$ cho giá trị giới hạn thấp và cao.
+
+Kết quả cuối phải kiểm tra thêm operating point tại hai biên. Giới hạn được chấp nhận là điểm gần rail nhất mà M6 và M7 vẫn ở \texttt{region = 2}. Từ operating point danh định, ước lượng ban đầu là
+\begin{equation}
+V_{OUT,min}\gtrsim V_{DSAT6}\approx\SI{144}{mV},\qquad
+V_{OUT,max}\lesssim V_{DD}-|V_{DSAT7}|\approx\SI{1.096}{V}.
+\end{equation}
+\placeholderfigure{output_swing_testbench.png}{Testbench DC vòng hở để khảo sát output swing của OTA độc lập.}
+\placeholderfigure{output_swing_result.png}{Đường truyền DC và hai marker $V_{OUT,min}$, $V_{OUT,max}$.}
+
+Từ hai plateau của đường truyền DC, ngõ ra tiến gần \SI{1.20}{V} khi $V_{IN-}<V_{IN+}$ và giảm về khoảng \SI{0.03}{V} khi $V_{IN-}>V_{IN+}$. Do đó biên điện áp quan sát được là
+\begin{equation}
+V_{OUT,min}\approx\SI{0.03}{V},\qquad
+V_{OUT,max}\approx\SI{1.20}{V},\qquad
+V_{swing,pp}\approx\SI{1.17}{V}.
+\end{equation}
+Đây là giới hạn plateau của đặc tuyến vòng hở. Kiểm tra operating point tại hai biên cho thấy M6 và M7 đều có \texttt{region = 2}; do đó hai transistor vẫn làm việc trong miền bão hòa và dải output swing trên được chấp nhận.
+
+\chapter{Phân tích AC}
+
+\section{Độ lợi vòng hở và ổn định}
+Hai đầu vào được phân cực tại \SI{258}{mV} và kích vi sai AC tổng bằng \SI{1}{V}. Hàm truyền được tính trực tiếp bởi
+\begin{equation}
+A_d(f)=\frac{V_{OUT}(f)}{V_{IN+}(f)-V_{IN-}(f)}.
+\end{equation}
+
+\placeholderfigure{ac_testbench.png}{Testbench AC vi sai vòng hở với $C_L=\SI{500}{fF}$ và mạng bù $R_z$--$C_C$.}
+\placeholderfigure{gain_phase_final.png}{Đáp ứng biên độ và pha vòng hở của OTA với $C_L=\SI{500}{fF}$.}
+
+Từ kết quả mô phỏng AC cuối cùng:
+\begin{align}
+A_0&\approx\SI{66.31}{dB},\\
+f_u&\approx\SI{363.08}{kHz},\\
+\angle A(f_u)&\approx-\ang{115.58},\\
+PM&=180^\circ-115.58^\circ\approx\ang{64.42}.
+\end{align}
+Phase margin lớn hơn \ang{60}, cho thấy OTA ổn định với tải khảo sát. Đồng thời, độ lợi DC lớn hơn \SI{60}{dB} và unity-gain frequency lớn hơn \SI{300}{kHz}; cả ba chỉ tiêu AC đều đạt yêu cầu của phiên bản công suất thấp.
+
+\section{Phạm vi của báo cáo OTA}
+Ở cấp OTA độc lập, báo cáo dừng tại gain, unity-gain frequency, phase margin và công suất. PSRR, line regulation, startup, PVT và sai số $V_{REF}$ thuộc phần kiểm chứng bandgap hoàn chỉnh.
+
+\chapter{Kết quả và thảo luận}
+
+\section{Bảng tổng hợp}
+\begin{table}[H]\centering
+\caption{Tổng hợp yêu cầu và kết quả hiện có.}
+\small
+\begin{tabularx}{\textwidth}{>{\bfseries\raggedright\arraybackslash}p{0.19\textwidth} >{\raggedright\arraybackslash}p{0.18\textwidth} >{\raggedright\arraybackslash}p{0.31\textwidth} >{\raggedright\arraybackslash}X}
+\toprule
+Chỉ tiêu & Yêu cầu & Kết quả hiện có & Trạng thái\\
+\midrule
+Độ lợi DC & $\ge\SI{60}{dB}$ & \SI{66.31}{dB} & \pass\\
+Unity-gain frequency & $\ge\SI{300}{kHz}$ & \SI{363.08}{kHz} & \pass\\
+Phase margin & $\ge\ang{60}$ & \ang{64.42} & \pass\\
+ICMR & yêu cầu \SIrange{0.15}{0.35}{V} & đo được \SIrange{0.130}{1.030}{V} & \pass{} ở nominal\\
+Công suất tĩnh & cực tiểu & \SI{0.970}{\micro W} đo tại nguồn $V_3$ & Dưới \SI{1}{\micro W}\\
+Output swing & M6, M7 còn bão hòa & khoảng \SIrange{0.03}{1.20}{V}; M6--M7 có region 2 & \pass\\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\section{Các đánh đổi chính}
+\begin{itemize}[leftmargin=18mm]
+  \item Tăng chiều dài kênh làm tăng $r_o$ và độ lợi, nhưng tăng diện tích và điện dung ký sinh.
+  \item Tăng $C_C$ cải thiện phase margin nhưng giảm GBW và làm chậm startup của bandgap.
+  \item Tăng $g_{m6}$ đẩy pole không trội lên cao nhưng tăng dòng tầng hai và yêu cầu cân bằng lại M7.
+  \item Tinh chỉnh $R_z$ có thể cải thiện phase mà không thay đổi DC, nhưng giá trị tối ưu phụ thuộc $g_{m6}$ thực tế và các pole ký sinh.
+  \item Dòng bias rất thấp giúp công suất dưới mức microwatt, song làm mạch nhạy hơn với leakage, mismatch và parasitic.
+\end{itemize}
+
+\chapter{Kết luận}
+OTA hai tầng dùng cặp vi sai PMOS hoạt động đúng tại điều kiện nominal; toàn bộ M1--M8 ở miền bão hòa. ICMR đạt \SIrange{0.130}{1.030}{V}, bao phủ điểm common-mode \SI{258}{mV}; plateau ngõ ra quan sát được khoảng \SIrange{0.03}{1.20}{V}.
+
+Mô phỏng AC cho $A_0\approx\SI{66.31}{dB}$, $f_u\approx\SI{363.08}{kHz}$ và $PM\approx\ang{64.42}$; cả ba đều vượt yêu cầu tương ứng \SI{60}{dB}, \SI{300}{kHz} và \ang{60}. M6--M7 có \texttt{region = 2} tại các biên khảo sát nên output swing đạt yêu cầu. Phép đo trực tiếp tại nguồn cho công suất tĩnh \SI{0.970}{\micro W}. Như vậy phiên bản OTA công suất thấp đạt toàn bộ chỉ tiêu đã đặt ra. Báo cáo OTA kết thúc tại đây; các phép đo cấp hệ thống sẽ được thực hiện trong báo cáo bandgap.
+
+\begin{thebibliography}{9}
+\bibitem{razavi} B. Razavi, \emph{Design of Analog CMOS Integrated Circuits}, 2nd ed., McGraw-Hill Education, 2017.
+\bibitem{baker} R. J. Baker, \emph{CMOS: Circuit Design, Layout, and Simulation}, 3rd ed., Wiley-IEEE Press, 2010.
+\bibitem{allen} P. E. Allen, \emph{CMOS Analog Circuit Design: Design Procedure for the Unbuffered Two-Stage CMOS Operational Amplifier}, course lecture material, 2016.
+\bibitem{cadence} Cadence Design Systems, \emph{Virtuoso Analog Design Environment and Spectre Circuit Simulator}.
+\bibitem{gpdk} GPDK090 BSIM3 MOSFET models, nominal-corner models used in this project.
+\end{thebibliography}
+
+\end{document}
