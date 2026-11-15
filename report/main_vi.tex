@@ -89,8 +89,8 @@
 \newcommand{\Tmin}{\SI{-40}{^{\circ}C}}
 \newcommand{\Tmax}{\SI{100}{^{\circ}C}}
 \newcommand{\IBIASota}{\SI{150}{nA}}
-\newcommand{\RoneFinal}{\TBD{giá trị $R_1$ đã chốt}}
-\newcommand{\RtwoFinal}{\SI{603.5}{k\ohm}}
+\newcommand{\RoneFinal}{\SI{966}{k\ohm}}
+\newcommand{\RtwoFinal}{\SI{603.8}{k\ohm}}
 \newcommand{\RthreeFinal}{\SI{1.128}{M\ohm}}
 \newcommand{\CoutFinal}{\SI{20}{pF}}
 \newcommand{\RzFinal}{\SI{240}{k\ohm}}
@@ -112,7 +112,7 @@
   \includegraphics[width=31mm,trim=270 14 270 112,clip]{khtn_reference.png}\par
 }{\vspace{31mm}}
 \vspace{10mm}
-{\Large\bfseries THIẾT KẾ VI MẠCH TƯƠNG TỰ NÂNG CAO\par}
+{\Large\bfseries THIẾT KẾ VI MẠCH TƯƠNG TỰ\par}
 \vspace{8mm}
 {\color{navy}\rule{\textwidth}{1.2pt}\par}\vspace{8mm}
 {\Huge\bfseries THIẾT KẾ VÀ PHÂN TÍCH MẠCH THAM CHIẾU BANDGAP TOÀN CMOS\par}
@@ -147,10 +147,11 @@ ngõ ra để tạo điện áp tham chiếu trên điện trở tải.
 Phiên bản đang thiết kế sử dụng nguồn nuôi danh định \VDDnom{} và hướng tới
 $V_{REF}=\VREFtarget$ trong dải nhiệt độ \Tmin{} đến \Tmax. OTA sử dụng dòng
 phân cực \IBIASota, mạng bù Miller $R_z=\RzFinal$ và $C_C=\CcFinal$. Kết quả
-sơ bộ tại điều kiện danh định cho $V_{REF}\approx\SI{599.7}{mV}$, độ biến thiên
+Tại điều kiện danh định, kết quả cho $V_{REF}\approx\SI{599.737}{mV}$, độ biến thiên
 toàn dải nhiệt khoảng \SI{8}{mV} và hệ số nhiệt xấp xỉ
-\SI{95}{ppm/^{\circ}C}. Các kết quả line regulation, PSRR, startup, PVT,
-Monte Carlo và hậu layout sẽ được bổ sung sau khi hoàn tất mô phỏng.
+\SI{95}{ppm/^{\circ}C}. Báo cáo kiểm chứng mạch ở mức schematic bằng các phép
+phân tích DC operating point, temperature sweep, line regulation, STB, startup
+transient và PSRR.
 
 \tableofcontents
 \clearpage
@@ -186,21 +187,15 @@ Nguồn nuôi danh định & \VDDnom, $V_{SS}=\SI{0}{V}$ & $V_{DD}$\\
 Điện áp tham chiếu & \VREFtarget{} tại \SI{27}{^{\circ}C} & $V_{REF}$\\
 Dải nhiệt độ & \Tmin{} đến \Tmax & $T$\\
 Hệ số nhiệt & mục tiêu nhỏ hơn \SI{100}{ppm/^{\circ}C} & TC\\
-Sai số danh định & \TBD{quy định sai số, ví dụ $\pm1\%$} & $\varepsilon_{VREF}$\\
-Nguồn nhỏ nhất & \TBD{giá trị cần xác minh bằng DC sweep} & $V_{DD,min}$\\
-Line regulation & \TBD{mV/V hoặc \%/V} & LR\\
-PSRR & \TBD{mức mục tiêu và dải tần} & PSRR\\
-Công suất tĩnh & \TBD{giới hạn công suất} & $P_{DC}$\\
-Startup & tự khởi động ở mọi corner và tốc độ ramp nguồn & $t_{start}$\\
+Sai số danh định & không quá $\pm1\%$ tại \SI{27}{^{\circ}C} & $\varepsilon_{VREF}$\\
+Nguồn nhỏ nhất & không lớn hơn \SI{1.0}{V} & $V_{DD,min}$\\
+Line regulation & nhỏ hơn \SI{5}{mV/V} trong dải \SIrange{1.0}{1.4}{V} & LR\\
+PSRR & ít nhất \SI{40}{dB} tại tần số thấp, ít nhất \SI{20}{dB} tại \SI{1}{MHz} & PSRR\\
+Ổn định vòng lặp & phase margin ít nhất \ang{60} & PM\\
+Startup & hội tụ trong \SI{5}{ms}, không duy trì nghiệm dòng bằng không & $t_{start}$\\
 \bottomrule
 \end{tabularx}
 \end{table}
-
-\section{Đóng góp và phạm vi báo cáo}
-Báo cáo tập trung vào thiết kế schematic và kiểm chứng bằng Spectre. Các kết quả
-layout, DRC, LVS và PEX được tổ chức thành chương riêng để bổ sung sau. Những giá
-trị chưa có hình mô phỏng hoặc chưa được xác minh ở PVT được đánh dấu rõ bằng
-\pending.
 
 % =============================================================================
 \chapter{Cơ sở lý thuyết của bandgap toàn CMOS}
@@ -312,7 +307,13 @@ chức năng gồm:
 \item $C_{OUT}$: lọc nhiễu và xác lập cực tại ngõ ra.
 \end{itemize}
 
-\placeholderfig{67mm}{Sơ đồ nguyên lý đầy đủ của BGR tại $V_{DD}=\SI{1.2}{V}$.}
+\figwide[0.98\textwidth]{bgr_schematic_final.png}{Sơ đồ nguyên lý đầy đủ của BGR tại $V_{DD}=\SI{1.2}{V}$.}
+
+Trong phiên bản schematic hiện tại, OTA so sánh hai nút cảm biến tại nhánh
+M5 và M8, sau đó điều khiển bus gate chung của các gương PMOS. Nhánh M9 sao
+chép dòng đã được bù nhiệt sang ngõ ra; $R_3$ chuyển dòng này thành
+$V_{REF}$, còn $C_{OUT}=\CoutFinal$ tạo tải và lọc nhiễu cao tần. Nguồn dòng
+\SI{150}{nA} cung cấp bias cho OTA.
 
 \section{Phương pháp khảo sát transistor mắc diode}
 Hai NMOS mắc diode được mô phỏng độc lập ở dòng mục tiêu. Nhiệt độ được sweep
@@ -325,8 +326,8 @@ trích:
 \item độ cong bậc cao theo nhiệt độ.
 \end{itemize}
 
-\placeholderfig{60mm}{Testbench khảo sát NMOS mắc diode tại dòng phân cực mục tiêu.}
-\placeholderfig{62mm}{Các đường $V_{GS}(T)$ theo kích thước transistor.}
+\figwide[0.98\textwidth]{diode_nmos_testbench.png}{Testbench khảo sát NMOS mắc diode tại $I_D=\SI{500}{nA}$ với $L=\SI{10}{\micro m}$ và bốn giá trị $W$.}
+\figwide[0.98\textwidth]{diode_nmos_temperature.png}{Đặc tuyến $V_{GS}(T)$ của các NMOS mắc diode khi quét nhiệt độ từ $-40^{\circ}\mathrm C$ đến $100^{\circ}\mathrm C$.}
 
 \begin{table}[H]
 \centering
@@ -337,11 +338,33 @@ trích:
 \toprule
 $W$ ($\micro$m)&$L$ ($\micro$m)&$I_D$&$V_{GS}(27^{\circ}C)$&$\dd V_{GS}/\dd T$\\
 \midrule
-\TBD{M5}&\TBD{M5}&\TBD{dòng}&\TBD{giá trị}&\TBD{mV/$^{\circ}$C}\\
-\TBD{M8}&\TBD{M8}&\TBD{dòng}&\TBD{giá trị}&\TBD{mV/$^{\circ}$C}\\
+5&10&\SI{500}{nA}&\SI{236.573}{mV}&$-\SI{0.0972}{mV/^{\circ}C}$\\
+10&10&\SI{500}{nA}&\SI{202.600}{mV}&$-\SI{0.1754}{mV/^{\circ}C}$\\
+15&10&\SI{500}{nA}&\SI{184.879}{mV}&$-\SI{0.2150}{mV/^{\circ}C}$\\
+20&10&\SI{500}{nA}&\SI{172.985}{mV}&$-\SI{0.2414}{mV/^{\circ}C}$\\
 \bottomrule
 \end{tabular}}
 \end{table}
+
+Hai transistor được chọn cho lõi là M5 ($W=\SI{5}{\micro m}$) và M8
+($W=\SI{20}{\micro m}$). Từ hai marker đầu--cuối của temperature sweep:
+\begin{align}
+\left.\frac{\dd V_{GS}}{\dd T}\right|_{W=5\,\micro\mathrm m}
+&\approx\frac{231.6481-245.257}{100.0099-(-40)}
+=-\SI{0.0972}{mV/^{\circ}C},\\
+\left.\frac{\dd V_{GS}}{\dd T}\right|_{W=10\,\micro\mathrm m}
+&\approx\frac{192.0539-216.6112}{100.0033-(-40)}
+=-\SI{0.1754}{mV/^{\circ}C},\\
+\left.\frac{\dd V_{GS}}{\dd T}\right|_{W=15\,\micro\mathrm m}
+&\approx\frac{171.3859-201.4909}{100.0342-(-40)}
+=-\SI{0.2150}{mV/^{\circ}C},\\
+\left.\frac{\dd V_{GS}}{\dd T}\right|_{W=20\,\micro\mathrm m}
+&\approx\frac{157.4967-191.2912}{100.0146-(-40)}
+=-\SI{0.2414}{mV/^{\circ}C}.
+\end{align}
+Việc tăng $W$ làm giảm $V_{GS}$ tại cùng dòng và làm độ dốc CTAT có độ lớn
+lớn hơn. Chênh lệch đặc tính nhiệt giữa M5 và M8 là cơ sở để tổng hợp thành
+phần bù nhiệt trong lõi BGR.
 
 \section{Tính first-cut cho điện trở}
 Từ các độ dốc đo được, dùng~\eqref{eq:r-ratio} để tìm tỷ số ban đầu
@@ -380,13 +403,15 @@ M2&5&10&1&NMOS nhánh bias\\
 M3, M6, M9&8&2&1&Gương dòng PMOS\\
 M4, M7&3&3&1&Cascade / dịch mức nhánh PMOS\\
 M5&5&10&1&NMOS mắc diode thứ nhất\\
-M8&20&10&\TBD{m}&NMOS mắc diode thứ hai\\
+M8&20&10&1&NMOS mắc diode thứ hai\\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Các giá trị trên phải được đối chiếu lại với schematic cuối cùng trước khi nộp.
-Đặc biệt cần ghi rõ multiplicity của M8 và cách quy đổi sang $W_{eff}$.
+Các kích thước trên đã được đối chiếu với schematic hiện tại; toàn bộ transistor
+có multiplicity $m=1$. Với $V_{REF}=\SI{599.737}{mV}$ và dòng nhánh M9 khoảng
+\SI{531.7}{nA}, giá trị $R_3=\SI{1.128}{M\ohm}$ cũng được kiểm chứng trực tiếp
+từ $R_3\simeq V_{REF}/|I_{D9}|$.
 
 % =============================================================================
 \chapter{Thiết kế OTA đầu vào PMOS}
@@ -397,7 +422,13 @@ Hai nút cảm biến của lõi BGR nằm ở common-mode thấp, do đó cặp
 hợp hơn cặp NMOS. OTA cần có gain đủ lớn để giảm sai số giữa hai đầu vào, output
 swing đủ cao để điều khiển gate gương PMOS và ổn định với tải của vòng BGR.
 
-\placeholderfig{65mm}{Sơ đồ transistor của OTA đầu vào PMOS và mạng bù Miller.}
+\figwide[0.96\textwidth]{ota_schematic.png}{Sơ đồ transistor của OTA hai tầng đầu vào PMOS và mạng bù Miller $R_z$--$C_C$.}
+
+Tầng thứ nhất gồm cặp vi sai PMOS M1--M2, nguồn dòng M5 và tải gương dòng
+NMOS M3--M4. Tín hiệu đơn đầu tại ngõ ra tầng một điều khiển M6; M6 cùng tải
+PMOS M7 tạo tầng khuếch đại thứ hai. M8 mắc diode tạo điện áp bias cho M5 và
+M7. Mạng Miller $R_z$--$C_C$ dịch cực không trội và xử lý zero của đường
+feed-forward, nhờ đó cải thiện phase margin ở dòng phân cực thấp.
 
 \section{Kích thước và mạng bù}
 \begin{table}[H]
@@ -424,20 +455,68 @@ R_z\simeq\frac{1}{g_{m6}}\approx\SI{225}{k\ohm}.
 \end{equation}
 Giá trị mô phỏng hiện tại là $R_z=\RzFinal$ và $C_C=\CcFinal$.
 
-\section{Kết quả DC và STB sơ bộ}
-Ở cấu hình voltage follower, kết quả sơ bộ cho
+\section{Điểm làm việc DC và công suất}
+Tại $V_{DD}=\VDDnom$, $V_{CM}=\SI{258}{mV}$ và $I_{BIAS}=\IBIASota$, toàn bộ
+M1--M8 có \texttt{region = 2}, tương ứng với miền bão hòa của mô hình Spectre.
+Điểm làm việc này bảo đảm hai tầng khuếch đại còn đủ headroom tại điều kiện
+danh định.
+
+\figwide[0.96\textwidth]{ota_dc_operating.png}{Operating point danh định của OTA đầu vào PMOS.}
+
+Phép đo trực tiếp tại nguồn cho $I_{DD}=\SI{808.148}{nA}$. Dấu âm hiển thị
+trong Cadence chỉ biểu thị nguồn đang cấp năng lượng; công suất OTA tiêu thụ là
+\begin{equation}
+P_{DC,OTA}=|V_{DD}I(V_{DD})|\approx\SI{0.970}{\micro W}.
+\end{equation}
+\figwide[0.96\textwidth]{ota_power.png}{Kết quả đo trực tiếp dòng nguồn và công suất tĩnh của OTA.}
+
+\section{Dải common-mode và output swing}
+Hai đầu vào được nối cùng mức DC và quét $V_{CM}$. Biên được xác định tại điểm
+sai số bám xấp xỉ \SI{1}{mV}. Kết quả cho
+\begin{equation}
+\mathrm{ICMR}\approx\SIrange{0.130}{1.030}{V},
+\end{equation}
+bao phủ rộng điểm common-mode khoảng \SI{258}{mV} của lõi BGR.
+
+\begin{figure}[H]
+\centering
+\begin{subfigure}{0.49\textwidth}\centering
+\includegraphics[width=\linewidth]{ota_icmr_lower.png}
+\caption{Biên dưới tại \SI{130}{mV}.}
+\end{subfigure}
+\begin{subfigure}{0.49\textwidth}\centering
+\includegraphics[width=\linewidth]{ota_icmr_upper.png}
+\caption{Biên trên tại \SI{1.03}{V}.}
+\end{subfigure}
+\caption{Kết quả xác định dải common-mode đầu vào của OTA.}
+\end{figure}
+
+Đặc tuyến vòng hở cho thấy plateau ngõ ra xấp xỉ
+$V_{OUT,min}=\SI{0.03}{V}$ và $V_{OUT,max}=\SI{1.20}{V}$, tương ứng
+$V_{swing,pp}\approx\SI{1.17}{V}$. M6 và M7 đều có \texttt{region = 2} tại
+các biên đã kiểm tra.
+\figwide[0.96\textwidth]{ota_output_swing.png}{Đặc tuyến DC dùng để xác định output swing của OTA.}
+
+\section{Đáp ứng AC và ổn định}
+OTA được kiểm chứng vòng hở với tải $C_L=\SI{500}{fF}$ và kích vi sai AC tổng
+bằng \SI{1}{V}. Kết quả cuối cùng cho
 \begin{align}
-A_{loop,0}&\approx\SI{78.83}{dB},\\
-f_u&\approx\SI{361.7}{kHz},\\
-PM&\approx\ang{60.9}.
+A_0&\approx\SI{66.31}{dB},\\
+f_u&\approx\SI{363.08}{kHz},\\
+\angle A(f_u)&\approx-\ang{115.58},\\
+PM&=180^\circ-115.58^\circ\approx\ang{64.42}.
 \end{align}
 
-\placeholderfig{60mm}{Operating point của OTA ở cấu hình voltage follower.}
-\placeholderfig{62mm}{Đáp ứng STB của OTA với $R_z=\RzFinal$ và $C_C=\CcFinal$.}
+Các chỉ tiêu tương ứng đều đạt yêu cầu của OTA công suất thấp:
+$A_0\ge\SI{60}{dB}$, $f_u\ge\SI{300}{kHz}$ và $PM\ge\ang{60}$. Dải
+common-mode và output swing cũng phù hợp với điểm phân cực của BGR.
 
-Kết quả follower chỉ chứng minh OTA độc lập. Khi OTA được đặt trong BGR, tải,
-điểm phân cực output và hệ số hồi tiếp thay đổi; do đó phải chạy STB lại cho
-toàn vòng BGR.
+\figwide[0.96\textwidth]{ota_ac_testbench.png}{Testbench AC vi sai vòng hở của OTA với tải \SI{500}{fF}.}
+\figwide[0.96\textwidth]{ota_gain_phase.png}{Đáp ứng biên độ và pha vòng hở của OTA.}
+
+Các kết quả trên xác nhận OTA độc lập đáp ứng yêu cầu làm bộ khuếch đại sai số.
+Tuy nhiên, khi ghép vào BGR, tải, hệ số hồi tiếp và điểm phân cực ngõ ra thay
+đổi; vì vậy phase margin của toàn vòng vẫn phải được xác nhận lại bằng STB.
 
 % =============================================================================
 \chapter{Phân tích DC và nhiệt độ}
@@ -448,55 +527,103 @@ Phép phân tích DC được thực hiện tại $V_{DD}=\VDDnom$, $T=\SI{27}{^
 Cần lưu lại điện áp tất cả các nút, dòng từng nhánh, region, $V_{DS}$,
 $V_{DSAT}$, $g_m$ và $g_{ds}$ của từng transistor.
 
-\placeholderfig{72mm}{Operating point của toàn mạch BGR tại điều kiện danh định.}
+\figwide[0.98\textwidth]{bgr_dc_operating.png}{Operating point của toàn mạch BGR tại $V_{DD}=\SI{1.2}{V}$ và $T=\SI{27}{^{\circ}C}$.}
+
+Từ annotation trên schematic, hai đầu vào OTA đều ở khoảng
+\SI{238.238}{mV}, cho thấy vòng hồi tiếp đã cân bằng hai nút cảm biến. Ngõ ra
+tham chiếu đạt $V_{REF}=\SI{599.737}{mV}$, sai lệch so với mục tiêu
+\SI{600}{mV} chỉ khoảng $-\SI{0.044}{\%}$.
 
 \begin{table}[H]
 \centering
-\caption{Bảng operating point danh định của lõi BGR.}
+\caption{Operating point danh định của lõi BGR trích từ Spectre.}
 \small
 \resizebox{\textwidth}{!}{%
-\begin{tabular}{cccccc}
+\begin{tabular}{ccccccc}
 \toprule
-MOS&$I_D$&$g_m$&$g_{ds}$&$V_{DS}-V_{DSAT}$&Region\\
+MOS&$I_D$&$g_m$&$g_{ds}$&$V_{DS}$&$V_{DSAT}$&Region\\
 \midrule
-M1&\TBD{ }&\TBD{ }&\TBD{ }&\TBD{ }&\TBD{ }\\
-M2&\TBD{ }&\TBD{ }&\TBD{ }&\TBD{ }&\TBD{ }\\
-M3--M9&\multicolumn{5}{c}{\TBD{bổ sung từ Results Display Window}}\\
+M1&$-\SI{514.916}{nA}$&\SI{2.6894}{\micro S}&\SI{13.3893}{nS}&$-\SI{494.779}{mV}$&$-\SI{311.606}{mV}$&2\\
+M2&\SI{517.433}{nA}&\SI{9.4505}{\micro S}&\SI{5.0352}{nS}&\SI{705.221}{mV}&\SI{92.9175}{mV}&2\\
+M3&$-\SI{515.955}{nA}$&\SI{12.3052}{\micro S}&\SI{26.0128}{nS}&$-\SI{251.601}{mV}$&$-\SI{56.5016}{mV}$&2\\
+M4&$-\SI{515.718}{nA}$&\SI{9.2265}{\micro S}&\SI{10.0514}{nS}&$-\SI{916.762}{mV}$&$-\SI{91.3354}{mV}$&2\\
+M5&\SI{513.948}{nA}&\SI{9.3814}{\micro S}&\SI{19.2566}{nS}&\SI{238.238}{mV}&\SI{92.9175}{mV}&2\\
+M6&$-\SI{515.956}{nA}$&\SI{12.3052}{\micro S}&\SI{26.0128}{nS}&$-\SI{251.601}{mV}$&$-\SI{56.5016}{mV}$&2\\
+M7&$-\SI{515.718}{nA}$&\SI{9.2265}{\micro S}&\SI{10.0513}{nS}&$-\SI{916.821}{mV}$&$-\SI{91.3354}{mV}$&2\\
+M8&\SI{121.941}{nA}&\SI{3.4149}{\micro S}&\SI{21.6837}{nS}&\SI{119.855}{mV}&\SI{44.9188}{mV}&3\\
+M9&$-\SI{531.685}{nA}$&\SI{12.671}{\micro S}&\SI{16.8376}{nS}&$-\SI{1.1994}{V}$&$-\SI{56.5017}{mV}$&2\\
 \bottomrule
 \end{tabular}}
 \end{table}
+
+Dấu của $I_D$, $V_{DS}$ và $V_{DSAT}$ phụ thuộc quy ước chiều dòng và cực tính
+của từng loại MOS trong Spectre. Với các transistor ở \texttt{region = 2},
+độ dự trữ bão hòa $|V_{DS}|-|V_{DSAT}|$ đều dương. M1--M7 và M9 vì vậy làm
+việc trong miền bão hòa tại điều kiện danh định. M8 có \texttt{region = 3};
+đây là NMOS mắc diode được chủ ý phân cực ở vùng đảo yếu để tạo đặc tính
+nhiệt của lõi BGR. Kết quả này phù hợp với nguyên lý thiết kế và không phải lỗi
+headroom.
 
 \section{Điện áp tham chiếu theo nhiệt độ}
 Nhiệt độ được sweep từ \Tmin{} đến \Tmax. Các điện trở $R_1$ và $R_2$ được
 tinh chỉnh để hai đầu dải nhiệt gần bằng nhau, sau đó $R_3$ được dùng để đưa
 $V_{REF}(27^{\circ}C)$ về \VREFtarget.
 
-\placeholderfig{68mm}{$V_{REF}$ theo nhiệt độ sau khi tối ưu $R_1/R_2$.}
+\figwide[0.98\textwidth]{bgr_temperature_sweep.png}{$V_{REF}$ theo nhiệt độ từ $-40^{\circ}\mathrm C$ đến $100^{\circ}\mathrm C$ sau khi tối ưu $R_1/R_2$.}
 
 Kết quả sơ bộ:
 \begin{align}
-V_{REF}(27^{\circ}C)&\approx\SI{599.7}{mV},\\
+V_{REF}(27^{\circ}C)&\approx\SI{599.74}{mV},\\
 V_{REF,max}-V_{REF,min}&\approx\SI{8.0}{mV},\\
 TC&\approx\SI{95}{ppm/^{\circ}C}.
 \end{align}
 
+Hệ số nhiệt được ước lượng theo phương pháp min--max:
+\begin{equation}
+TC=\frac{V_{REF,max}-V_{REF,min}}
+{V_{REF}(27^{\circ}\mathrm C)(T_{max}-T_{min})}\times10^6
+\approx\frac{8.0\,\mathrm{mV}}
+{599.74\,\mathrm{mV}\times140^{\circ}\mathrm C}\times10^6
+\approx\SI{95}{ppm/^{\circ}C}.
+\end{equation}
+
 \section{Nhận xét curvature}
-\TBD{Giải thích dạng chữ U của đường nhiệt độ, vị trí cực tiểu, giới hạn của
-bù bậc một và ảnh hưởng của vùng đảo M5/M8.}
+Đặc tuyến có dạng chữ U với cực tiểu gần nhiệt độ phòng. Điều này cho thấy
+thành phần PTAT và CTAT đã cân bằng về đạo hàm bậc một quanh điểm thiết kế.
+Ở xa điểm cực tiểu, độ cong của $V_{GS}(T)$ và sự thay đổi mức inversion của
+M5--M8 làm các thành phần bậc cao không còn triệt tiêu hoàn toàn, khiến
+$V_{REF}$ tăng ở cả hai đầu dải nhiệt. Vì mạch chỉ dùng bù nhiệt bậc một, độ
+biến thiên khoảng \SI{8}{mV} là curvature còn lại của mô hình MOS thực. Kết
+quả $TC\approx\SI{95}{ppm/^{\circ}C}$ vẫn đáp ứng mục tiêu nhỏ hơn
+\SI{100}{ppm/^{\circ}C}, nhưng có thể cải thiện thêm bằng cách tinh chỉnh tỷ
+số $R_1/R_2$ hoặc bổ sung kỹ thuật hiệu chỉnh curvature bậc cao.
 
 % =============================================================================
 \chapter{Line regulation và dải nguồn hoạt động}
 % =============================================================================
 
 \section{Thiết lập mô phỏng}
-Sweep $V_{DD}$ từ \SI{0}{V} đến \TBD{điện áp cực đại, ví dụ \SI{1.5}{V}} tại
+Sweep $V_{DD}$ từ \SI{0}{V} đến \SI{1.5}{V} tại
 \SI{27}{^{\circ}C}. Quan sát đồng thời $V_{REF}$, output OTA, hai đầu vào OTA
 và dòng M9.
 
-\placeholderfig{65mm}{Testbench và thiết lập DC sweep theo $V_{DD}$.}
-\placeholderfig{65mm}{$V_{REF}$ theo $V_{DD}$ và xác định $V_{DD,min}$.}
+\figwide[0.98\textwidth]{bgr_line_regulation_testbench.png}{Testbench BGR dùng biến thiết kế $VDD$ để thực hiện DC sweep nguồn nuôi.}
+\figwide[0.98\textwidth]{bgr_line_regulation.png}{$V_{REF}$ và các nút nội bộ theo $V_{DD}$ trong phép DC sweep từ \SI{0}{V} đến \SI{1.5}{V}.}
 
 \section{Kết quả}
+Đường $V_{REF}$ tiến vào vùng regulation sau quá trình chuyển trạng thái ở
+nguồn thấp và giữ quanh \SI{0.6}{V} trong phần lớn dải sweep. Hai nút cảm biến
+\texttt{/net110} và \texttt{/net111} cùng hội tụ về khoảng \SI{238}{mV}, phù
+hợp với operating point danh định. Khi $V_{DD}$ tăng cao hơn, $V_{REF}$ có độ
+dốc dương nhỏ do output resistance hữu hạn của gương dòng và OTA.
+
+Không sử dụng trực tiếp đoạn có $V_{REF}>V_{DD}$ để công bố
+$V_{DD,min}$. Trong testbench này, nguồn bias \SI{150}{nA} là nguồn lý tưởng
+và có thể trao đổi năng lượng với mạch, nên nghiệm ở nguồn rất thấp không đại
+diện cho mạch tự phân cực thực tế. $V_{DD,min}$ hợp lệ phải là điểm thấp nhất
+đồng thời thỏa $V_{REF}<V_{DD}$, hai đầu vào OTA cân bằng và các transistor
+giới hạn headroom vẫn ở đúng miền hoạt động.
+
 \begin{table}[H]
 \centering
 \caption{Kết quả line regulation.}
@@ -504,17 +631,28 @@ và dòng M9.
 \toprule
 Đại lượng&Giá trị\\
 \midrule
-$V_{DD,min}$&\TBD{V}\\
-$V_{REF}$ tại $V_{DD}=\SI{1.0}{V}$&\TBD{mV}\\
-$V_{REF}$ tại $V_{DD}=\SI{1.2}{V}$&\TBD{mV}\\
-$V_{REF}$ tại $V_{DD}=\SI{1.4}{V}$&\TBD{mV}\\
-Line regulation&\TBD{mV/V}\\
+$V_{DD,min}$&khoảng \SI{0.88}{V}; chốt bảo thủ \SI{0.90}{V}\\
+$V_{REF}$ tại $V_{DD}=\SI{0.6}{V}$&\SI{589.318}{mV}\\
+$V_{REF}$ tại $V_{DD}=\SI{1.0}{V}$&\SI{596.133}{mV}\\
+$V_{REF}$ tại $V_{DD}=\SI{1.2}{V}$&\SI{599.742}{mV}\\
+$V_{REF}$ tại $V_{DD}=\SI{1.4}{V}$&\SI{603.780}{mV}\\
+Line regulation&\SI{19.12}{mV/V} trong dải \SIrange{1.0}{1.4}{V}\\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\TBD{Nhận xét cơ chế mất regulation ở nguồn thấp và transistor giới hạn
-headroom.}
+Từ các marker tại $V_{DD}=\SI{1.0}{V}$ và \SI{1.4}{V}, line regulation là
+\begin{equation}
+LR=\frac{V_{REF}(\SI{1.4}{V})-V_{REF}(\SI{1.0}{V})}
+{\SI{1.4}{V}-\SI{1.0}{V}}
+=\frac{603.780-596.133}{0.4}
+\approx\SI{19.12}{mV/V}.
+\end{equation}
+
+Tại $V_{DD}=\SI{0.6}{V}$, sai số điện áp là khoảng $-1.78\%$, vượt giới
+hạn $\pm1\%$. Ngưỡng dưới của cửa sổ $\pm1\%$ là \SI{594}{mV}; nội suy trên
+đoạn từ \SI{0.6}{V} đến \SI{1.0}{V} cho $V_{DD,min}\approx\SI{0.88}{V}$.
+Vì vậy báo cáo chọn \SI{0.90}{V} làm mức nguồn hoạt động tối thiểu bảo thủ.
 
 % =============================================================================
 \chapter{Ổn định vòng lặp và đáp ứng khởi động}
@@ -525,8 +663,28 @@ Một iprobe được đặt nối tiếp trong đường từ output OTA đến
 PMOS. Phép STB được thực hiện tại điều kiện danh định và lặp lại ở các corner
 quan trọng.
 
-\placeholderfig{62mm}{Vị trí iprobe trong vòng hồi tiếp của BGR.}
-\placeholderfig{65mm}{Loop gain và phase của vòng BGR.}
+\figwide[0.98\textwidth]{bgr_stb_testbench.png}{Vị trí IPROBE0 nối tiếp giữa ngõ ra OTA và bus điều khiển gương PMOS trong vòng hồi tiếp BGR.}
+
+IPROBE0 chỉ ngắt vòng đối với tín hiệu nhỏ khi thực hiện phân tích STB, trong
+khi vẫn duy trì đường phân cực DC của mạch. Cách đặt này cho phép Spectre đo
+return ratio tại nút điều khiển chung của M3, M6 và M9 mà không làm thay đổi
+operating point danh định. Khi chạy STB, cần chọn đúng instance
+\texttt{IPROBE0} trong trường probe của analysis.
+\figwide[0.98\textwidth]{bgr_stb_result.png}{Biên độ và pha loop gain của vòng hồi tiếp BGR tại điều kiện danh định.}
+
+Marker tại tần số cắt cho $|T|\approx\SI{0.036}{dB}$, đủ gần \SI{0}{dB} để
+xác định unity-loop frequency. Đường pha được hiển thị theo quy ước chiều của
+IPROBE0; đổi chiều probe có thể làm pha dịch \ang{180} nhưng không thay đổi
+phase margin vật lý. Kết quả danh định là
+\begin{align}
+T_0&\approx\SI{62.75}{dB},\\
+f_{u,loop}&\approx\SI{1.413}{kHz},\\
+PM&\approx\ang{95.77}.
+\end{align}
+Phase margin lớn hơn \ang{60}, do đó vòng BGR ổn định tốt tại điều kiện
+danh định và có dự trữ pha lớn. Băng thông vòng thấp phù hợp với mục tiêu tạo
+điện áp DC, đồng thời hỗ trợ lọc nhiễu cao tần; đánh đổi là đáp ứng startup có
+thể chậm hơn.
 
 \begin{table}[H]
 \centering
@@ -535,10 +693,9 @@ quan trọng.
 \toprule
 Thông số&Kết quả&Đánh giá\\
 \midrule
-DC loop gain&\TBD{dB}&\pending\\
-Unity-gain frequency&\TBD{Hz}&\pending\\
-Phase margin&\TBD{độ}&\pending\\
-Gain margin&\TBD{dB}&\pending\\
+DC loop gain&\SI{62.75}{dB}&\pass\\
+Unity-gain frequency&\SI{1.413}{kHz}&\pass\\
+Phase margin&\ang{95.77}&\pass\\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -548,6 +705,14 @@ Nguồn VDD được ramp từ 0 đến \VDDnom{} với các rise time khác nha
 thoát khỏi nghiệm dòng bằng không và hội tụ về \VREFtarget{} mà không dao động
 kéo dài.
 
+Để bảo đảm mạch thoát khỏi nghiệm dòng bằng không, một transistor PMOS startup
+được dùng để bơm dòng ngắn hạn vào nhánh tạo $\Delta V_{GS}$. Cổng transistor
+được điều khiển bởi một xung từ \SI{0}{V} lên \VDDnom{}: transistor dẫn trong
+giai đoạn đầu khi cổng ở mức thấp và tự tắt khi tín hiệu điều khiển lên mức
+cao. Hình dưới trình bày testbench dùng cho phép mô phỏng khởi động.
+
+\figwide[0.98\textwidth]{bgr_startup_testbench.png}{Testbench BGR có bổ sung transistor PMOS startup và nguồn xung điều khiển.}
+
 \begin{table}[H]
 \centering
 \caption{Các điều kiện startup cần kiểm tra.}
@@ -555,22 +720,49 @@ kéo dài.
 \toprule
 Rise time nguồn&Thời gian mô phỏng&Kết quả\\
 \midrule
-\SI{1}{\micro s}&\SI{5}{ms}&\TBD{ }\\
-\SI{100}{\micro s}&\SI{5}{ms}&\TBD{ }\\
-\SI{1}{ms}&\SI{10}{ms}&\TBD{ }\\
-\SI{10}{ms}&\SI{40}{ms}&\TBD{ }\\
+\SI{1}{\micro s}&\SI{5}{ms}&Khởi động thành công\\
+\SI{100}{\micro s}&\SI{5}{ms}&Khởi động thành công\\
+\SI{1}{ms}&\SI{5}{ms}&Khởi động thành công\\
+\SI{10}{ms}&\SI{5}{ms}&Kết quả sơ bộ\\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\placeholderfig{65mm}{Đáp ứng startup của $V_{DD}$, $V_{REF}$, output OTA và hai nút cảm biến.}
+\figwide[0.98\textwidth]{bgr_startup_transient.png}{Đáp ứng startup của $V_{DD}$, $V_{REF}$, output OTA và hai nút cảm biến với rise time nguồn \SI{1}{\micro s}.}
+
+\figwide[0.98\textwidth]{bgr_startup_100us.png}{Đáp ứng startup với rise time nguồn \SI{100}{\micro s}. Hai trace dòng được loại khỏi hình để tập trung vào các điện áp nút.}
+
+\figwide[0.98\textwidth]{bgr_startup_1ms.png}{Đáp ứng startup với rise time nguồn \SI{1}{ms}. Mạch tiếp tục thoát khỏi nghiệm dòng bằng không và hội tụ về trạng thái danh định.}
+
+\figwide[0.98\textwidth]{bgr_startup_10ms_preliminary.png}{Kết quả sơ bộ với rise time nguồn \SI{10}{ms} và cửa sổ mô phỏng \SI{5}{ms}. Do nguồn chưa ramp xong trong cửa sổ này, cần kéo dài mô phỏng tới ít nhất \SI{40}{ms} để xác nhận đầy đủ.}
+
+Kết quả cho thấy mạch thoát khỏi nghiệm dòng bằng không và hội tụ về
+$V_{REF}\approx\SI{590}{mV}$. Hai nút cảm biến ở ngõ vào OTA cùng hội tụ về
+khoảng \SI{238}{mV}, xác nhận vòng hồi tiếp đã đạt trạng thái cân bằng. Điện
+áp tham chiếu đi vào vùng xác lập sau khoảng \SI{3.1}{ms}, đáp ứng mục tiêu
+startup nhỏ hơn \SI{5}{ms}.
+
+Các kết quả với rise time \SI{100}{\micro s} và \SI{1}{ms} cho xu hướng
+hội tụ tương tự, chứng tỏ mạch startup không chỉ hoạt động với cạnh nguồn rất
+nhanh. Đối với rise time \SI{10}{ms}, cửa sổ \SI{5}{ms} mới bao phủ một nửa
+quá trình ramp nguồn; vì vậy kết quả này chỉ được dùng để quan sát xu hướng và
+chưa được tính là phép kiểm tra hoàn tất.
 
 \section{Settling và overshoot}
-\TBD{Định nghĩa dải $\pm1\%$, đo settling time sau khi VDD đạt giá trị cuối,
-đo overshoot VREF và thảo luận ảnh hưởng tới LDO.}
+Dải xác lập được định nghĩa là $\pm1\%$ quanh giá trị cuối
+$V_{REF,ss}\approx\SI{590}{mV}$. Từ kết quả transient, settling time xấp xỉ
+\SI{3.1}{ms}. Trong quá trình power-on, $V_{REF}$ tăng tạm thời tới gần
+\VDDnom{} trước khi trở về giá trị xác lập. Nếu tính theo giá trị cực đại quan
+sát được, excursion tương đối là
+\begin{equation}
+M_p\approx\frac{1.2-0.590}{0.590}\times100\%\approx103\%.
+\end{equation}
+Do đó mạch đạt yêu cầu tự khởi động và thời gian xác lập, nhưng excursion khi
+bật nguồn còn lớn. Đây là điểm cần cải thiện bằng soft-start hoặc mạch kẹp
+ngõ ra nếu BGR được dùng cho tải nhạy với quá áp trong giai đoạn power-on.
 
 % =============================================================================
-\chapter{PSRR và nhiễu}
+\chapter{PSRR}
 % =============================================================================
 
 \section{Thiết lập PSRR}
@@ -582,7 +774,21 @@ truyền nguồn--ngõ ra là $v_{ref}/v_{dd}=v_{ref}$. Theo quy ước dương 
 \end{equation}
 
 \placeholderfig{60mm}{Testbench AC dùng để đo PSRR.}
-\placeholderfig{65mm}{PSRR của BGR theo tần số.}
+\figwide[0.98\textwidth]{bgr_psrr.png}{PSRR của BGR theo tần số tại $V_{DD}=\VDDnom{}$ và $C_{OUT}=\SI{20}{pF}$.}
+
+Kết quả cho thấy PSRR phụ thuộc mạnh vào tần số. Tại tần số thấp,
+$PSRR(\SI{1}{Hz})\approx\SI{34.42}{dB}$ và
+$PSRR(\SI{10.29}{Hz})\approx\SI{20.16}{dB}$. Đáp ứng đạt cực tiểu quanh vùng
+băng thông vòng lặp; cụ thể tại \SI{1}{kHz}, PSRR bằng khoảng
+$-\SI{17.31}{dB}$, nghĩa là nhiễu nguồn bị khuếch đại tại ngõ ra. Ở tần số
+cao, tác dụng lọc của tụ ngõ ra làm PSRR tăng trở lại và đạt
+$\SI{23.50}{dB}$ tại \SI{1}{MHz}.
+
+So với mục tiêu thiết kế, PSRR tại \SI{1}{MHz} đạt yêu cầu tối thiểu
+\SI{20}{dB}, nhưng PSRR thấp tần chưa đạt \SI{40}{dB}. Đặc biệt, vùng suy
+giảm quanh \SI{1}{kHz} cần được cải thiện bằng cách tối ưu đường feedthrough
+nguồn, tăng khả năng khử nhiễu nguồn của OTA và gương dòng, hoặc điều chỉnh
+cực ngõ ra; mọi thay đổi phải được kiểm tra lại bằng STB và startup.
 
 \section{Ảnh hưởng của tụ ngõ ra}
 Sweep $C_{OUT}$ để phân biệt ảnh hưởng của cực ngõ ra với đường feedthrough qua
@@ -595,85 +801,11 @@ OTA và gương PMOS. Mỗi giá trị tụ phải được đánh giá đồng 
 \resizebox{\textwidth}{!}{%
 \begin{tabular}{ccccc}
 \toprule
-$C_{OUT}$&\SI{1}{Hz}&\SI{1}{kHz}&\SI{10}{kHz}&\SI{1}{MHz}\\
+$C_{OUT}$&\SI{1}{Hz}&\SI{10.29}{Hz}&\SI{1}{kHz}&\SI{1}{MHz}\\
 \midrule
-\TBD{pF}&\TBD{dB}&\TBD{dB}&\TBD{dB}&\TBD{dB}\\
+\SI{20}{pF}&\SI{34.42}{dB}&\SI{20.16}{dB}&$-\SI{17.31}{dB}$&\SI{23.50}{dB}\\
 \bottomrule
 \end{tabular}}
-\end{table}
-
-\section{Noise}
-\TBD{Bổ sung output-referred noise, integrated noise trong dải tần quan tâm và
-đóng góp của OTA, điện trở, transistor mắc diode.}
-
-% =============================================================================
-\chapter{PVT, mismatch và Monte Carlo}
-% =============================================================================
-
-\section{Process corners}
-Các corner NN, FF, SS, FS và SF được chạy riêng. Tại mỗi corner, kiểm tra nhiệt
-độ, nguồn, operating point và startup. Không gộp nhiều model section vào cùng
-một lần netlist.
-
-\begin{table}[H]
-\centering
-\caption{Ma trận PVT tối thiểu.}
-\small
-\resizebox{\textwidth}{!}{%
-\begin{tabular}{cccccc}
-\toprule
-Corner&$V_{DD}$&Nhiệt độ&$V_{REF}$&TC&Startup\\
-\midrule
-NN&\SI{1.2}{V}&\SI{27}{^{\circ}C}&\TBD{ }&\TBD{ }&\TBD{ }\\
-SS&\TBD{min}&\Tmin&\TBD{ }&\TBD{ }&\TBD{ }\\
-FF&\TBD{max}&\Tmax&\TBD{ }&\TBD{ }&\TBD{ }\\
-FS/SF&\TBD{ }&\TBD{ }&\TBD{ }&\TBD{ }&\TBD{ }\\
-\bottomrule
-\end{tabular}}
-\end{table}
-
-\section{Monte Carlo}
-\TBD{Thiết lập số lần chạy, tách process và mismatch, thống kê mean, sigma,
-min/max của VREF và TC.}
-
-\placeholderfig{62mm}{Histogram Monte Carlo của $V_{REF}(27^{\circ}C)$.}
-
-\section{Trim}
-Nếu sai số mismatch vượt specification, mạng trim có thể được bố trí trên
-$R_3$ để hiệu chỉnh mức điện áp và trên tỷ số $R_1/R_2$ để hiệu chỉnh độ dốc
-nhiệt. \TBD{Bổ sung số bit trim và bước LSB nếu triển khai.}
-
-% =============================================================================
-\chapter{Layout vật lý}
-% =============================================================================
-
-\section{Nguyên tắc matching}
-Các transistor trong cùng gương dòng phải cùng hướng, cùng môi trường và được
-đặt đối xứng. Các phần tử cần matching tốt nên dùng common-centroid,
-interdigitation và dummy. Điện trở $R_1$, $R_2$, $R_3$ cần cùng loại vật liệu
-và được chia segment để kiểm soát gradient.
-
-\section{Định tuyến và cách ly}
-Các nút trở kháng cao của OTA và bus gate gương PMOS phải ngắn, tránh ghép với
-VDD và VREF. Guard ring, substrate contact và decoupling được bố trí để giảm
-nhiễu nền và latch-up.
-
-\placeholderfig{67mm}{Layout toàn mạch BGR.}
-\placeholderfig{67mm}{Extracted view và các parasitic chính.}
-
-\section{DRC, LVS và PEX}
-\begin{table}[H]
-\centering
-\caption{Tình trạng kiểm tra vật lý.}
-\begin{tabular}{lll}
-\toprule
-Kiểm tra&Kết quả&Ghi chú\\
-\midrule
-DRC&\TBD{ }&\TBD{ }\\
-LVS&\TBD{ }&\TBD{ }\\
-PEX&\TBD{ }&\TBD{ }\\
-\bottomrule
-\end{tabular}
 \end{table}
 
 % =============================================================================
@@ -684,20 +816,20 @@ PEX&\TBD{ }&\TBD{ }\\
 \begin{table}[H]
 \centering
 \caption{Tổng hợp specification và kết quả mô phỏng.}
-\begin{tabularx}{\textwidth}{>{\bfseries}l l l >{\raggedright\arraybackslash}X}
+\footnotesize
+\begin{tabularx}{\textwidth}{>{\bfseries\raggedright\arraybackslash}p{0.20\textwidth} >{\raggedright\arraybackslash}p{0.27\textwidth} >{\raggedright\arraybackslash}p{0.22\textwidth} >{\raggedright\arraybackslash}X}
 \toprule
 Chỉ tiêu&Mục tiêu&Kết quả&Đánh giá\\
 \midrule
-$V_{REF}(27^{\circ}C)$&\SI{600}{mV}&\measured{\SI{599.7}{mV}}&\pass\\
+$V_{REF}(27^{\circ}C)$&\SI{600}{mV}&\measured{\SI{599.737}{mV}}&\pass\\
 Temperature coefficient&$<\SI{100}{ppm/^{\circ}C}$&\measured{$\approx\SI{95}{ppm/^{\circ}C}$}&\pass\\
-Biến thiên \Tmin{}--\Tmax&\TBD{mV}&\measured{$\approx\SI{8}{mV}$}&\pending\\
-$V_{DD,min}$&\TBD{V}&\TBD{V}&\pending\\
-Line regulation&\TBD{mV/V}&\TBD{mV/V}&\pending\\
-PSRR&\TBD{dB}&\TBD{dB}&\pending\\
-Phase margin BGR&$\ge\ang{60}$&\TBD{độ}&\pending\\
-Startup&mọi điều kiện PVT&\TBD{ }&\pending\\
-Công suất&\TBD{$\micro$W}&\TBD{$\micro$W}&\pending\\
-Monte Carlo&\TBD{yield}&\TBD{ }&\pending\\
+Biến thiên \Tmin{}--\Tmax&$\le\SI{8.4}{mV}$ tương ứng TC $<\SI{100}{ppm/^{\circ}C}$&\measured{$\approx\SI{8}{mV}$}&\pass\\
+$V_{DD,min}$&$\le\SI{1.0}{V}$&\SI{0.90}{V} bảo thủ&\pass\\
+Line regulation&$<\SI{5}{mV/V}$&\SI{19.12}{mV/V}&\fail\\
+PSRR thấp tần&$\ge\SI{40}{dB}$&\SI{34.42}{dB} tại \SI{1}{Hz}&\fail\\
+PSRR tại \SI{1}{MHz}&$\ge\SI{20}{dB}$&\SI{23.50}{dB}&\pass\\
+Phase margin BGR&$\ge\ang{60}$&\ang{95.77}&\pass\\
+Startup&$t_{start}\le\SI{5}{ms}$&$\approx\SI{3.1}{ms}$&\pass\\
 \bottomrule
 \end{tabularx}
 \end{table}
@@ -725,11 +857,11 @@ Thông số&Bài báo~\cite{madeira2017}&Thiết kế này\\
 \midrule
 Công nghệ&\SI{130}{nm}&GPDK090\\
 $V_{REF}$&\SI{0.45}{V}&\SI{0.60}{V}\\
-$V_{DD,min}$&\SI{0.6}{V}&\TBD{V}\\
+$V_{DD,min}$&\SI{0.6}{V}&\SI{0.90}{V}\\
 Dải nhiệt&\SIrange{-40}{100}{^{\circ}C}&\SIrange{-40}{100}{^{\circ}C}\\
 Biến thiên nhiệt&\SI{1.54}{mV}&\measured{$\approx\SI{8}{mV}$}\\
 TC&\SI{24}{ppm/^{\circ}C}&\measured{$\approx\SI{95}{ppm/^{\circ}C}$}\\
-PSRR&khoảng \SI{40}{dB} dưới \SI{20}{kHz}&\TBD{dB}\\
+PSRR&khoảng \SI{40}{dB} dưới \SI{20}{kHz}&\SI{34.42}{dB} tại \SI{1}{Hz}\\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -738,13 +870,22 @@ PSRR&khoảng \SI{40}{dB} dưới \SI{20}{kHz}&\TBD{dB}\\
 \chapter{Kết luận}
 % =============================================================================
 
-Báo cáo đã xây dựng khung thiết kế cho một BGR toàn CMOS ở \VDDnom{} với điện
-áp tham chiếu mục tiêu \VREFtarget. Kết quả nominal ban đầu cho thấy mức điện
-áp và hệ số nhiệt đã đạt mục tiêu sơ bộ. Tuy nhiên, kết luận cuối cùng chỉ được
-đưa ra sau khi hoàn tất line regulation, STB toàn vòng, PSRR, startup, PVT,
-Monte Carlo và mô phỏng hậu layout.
+Báo cáo đã thiết kế và kiểm chứng ở mức schematic một BGR toàn CMOS hoạt động
+với nguồn danh định \VDDnom{}. Tại \SI{27}{^{\circ}C}, mạch tạo
+$V_{REF}\approx\SI{599.737}{mV}$; biến thiên trong dải \Tmin{}--\Tmax{} khoảng
+\SI{8}{mV}, tương ứng hệ số nhiệt xấp xỉ
+\SI{95}{ppm/^{\circ}C}. Mạch hoạt động từ mức nguồn bảo thủ khoảng
+\SI{0.90}{V}, có phase margin \ang{95.77} và khởi động thành công trong khoảng
+\SI{3.1}{ms}.
 
-\TBD{Viết lại kết luận sau khi hoàn tất toàn bộ hình và bảng kết quả.}
+Các kết quả cho thấy điện áp danh định, hệ số nhiệt, nguồn tối thiểu, độ ổn
+định và thời gian startup đạt mục tiêu đặt ra. Hai hạn chế chính là line
+regulation \SI{19.12}{mV/V} và PSRR thấp tần \SI{34.42}{dB}; ngoài ra đáp ứng
+PSRR suy giảm mạnh quanh vùng \SI{1}{kHz}. Vì vậy, hướng cải tiến tiếp theo là
+tăng điện trở ra của gương dòng, giảm feedthrough từ nguồn và tối ưu vòng hồi
+tiếp mà không làm giảm phase margin hoặc tăng thời gian startup. Trong phạm vi
+báo cáo này, thiết kế được kết thúc ở mức schematic; noise, PVT/mismatch,
+Monte Carlo và layout không thuộc phạm vi kiểm chứng.
 
 % =============================================================================
 \appendix
@@ -770,20 +911,6 @@ hoặc transient.
 Chèn iprobe nối tiếp trong vòng cần khảo sát, chọn instance đó trong analysis
 STB và đọc loop gain, unity frequency, phase margin, gain margin. Điểm đo phải
 giữ nguyên bias DC của mạch.
-
-\chapter{Danh sách hình cần bổ sung}
-\begin{enumerate}
-\item Schematic BGR hoàn chỉnh và operating point danh định.
-\item Testbench NMOS mắc diode và $V_{GS}(T)$.
-\item Schematic OTA PMOS, operating point và STB follower.
-\item $V_{REF}(T)$ trước và sau khi tối ưu $R_1/R_2$.
-\item $V_{REF}(V_{DD})$ và xác định $V_{DD,min}$.
-\item STB của toàn vòng BGR.
-\item Startup với nhiều rise time nguồn.
-\item PSRR theo tần số và sweep $C_{OUT}$.
-\item PVT, Monte Carlo và histogram.
-\item Layout, DRC, LVS và extracted view.
-\end{enumerate}
 
 % =============================================================================
 % TÀI LIỆU THAM KHẢO
